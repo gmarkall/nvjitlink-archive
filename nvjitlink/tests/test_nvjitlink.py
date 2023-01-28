@@ -135,3 +135,51 @@ def test_get_info_log(device_functions_cubin):
     _nvjitlinklib.destroy(handle)
     # Info log is empty
     assert "" == info_log
+
+
+def test_get_linked_cubin(device_functions_cubin):
+    handle = _nvjitlinklib.create('-arch=sm_75')
+    filename, data = device_functions_cubin
+    input_type = InputType.CUBIN.value
+    _nvjitlinklib.add_data(handle, input_type, data, filename)
+    _nvjitlinklib.complete(handle)
+    cubin = _nvjitlinklib.get_linked_cubin(handle)
+    _nvjitlinklib.destroy(handle)
+
+    # Just check we got something that looks like an ELF
+    assert cubin[:4] == b'\x7fELF'
+
+
+def test_get_linked_cubin_link_not_complete_error(device_functions_cubin):
+    handle = _nvjitlinklib.create('-arch=sm_75')
+    filename, data = device_functions_cubin
+    input_type = InputType.CUBIN.value
+    _nvjitlinklib.add_data(handle, input_type, data, filename)
+    with pytest.raises(RuntimeError,
+                       match="NVJITLINK_ERROR_INTERNAL error"):
+        _nvjitlinklib.get_linked_cubin(handle)
+    _nvjitlinklib.destroy(handle)
+
+
+def test_get_linked_ptx(device_functions_ptx):
+    handle = _nvjitlinklib.create('-arch=sm_75')
+    filename, data = device_functions_ptx
+    input_type = InputType.PTX.value
+    _nvjitlinklib.add_data(handle, input_type, data, filename)
+    _nvjitlinklib.complete(handle)
+    cubin = _nvjitlinklib.get_linked_ptx(handle)
+    _nvjitlinklib.destroy(handle)
+
+    # Just check we got something that looks like an ELF
+    assert cubin[:4] == b'\x7fELF'
+
+
+def test_get_linked_ptx_link_not_complete_error(device_functions_ptx):
+    handle = _nvjitlinklib.create('-arch=sm_75')
+    filename, data = device_functions_ptx
+    input_type = InputType.PTX.value
+    _nvjitlinklib.add_data(handle, input_type, data, filename)
+    with pytest.raises(RuntimeError,
+                       match="NVJITLINK_ERROR_INTERNAL error"):
+        _nvjitlinklib.get_linked_ptx(handle)
+    _nvjitlinklib.destroy(handle)
